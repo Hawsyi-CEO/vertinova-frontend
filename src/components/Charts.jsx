@@ -200,9 +200,25 @@ export const StatCard = ({ title, value, change, changeType, icon }) => {
 export const TrendLine = ({ data, title, height = 200 }) => {
   if (!data || data.length === 0) return null;
 
-  const maxValue = Math.max(...data.map(item => item.value));
-  const minValue = Math.min(...data.map(item => item.value));
+  // Validate data values
+  const validData = data.filter(item => item && typeof item.value === 'number' && !isNaN(item.value));
+  if (validData.length === 0) return null;
+
+  const maxValue = Math.max(...validData.map(item => item.value));
+  const minValue = Math.min(...validData.map(item => item.value));
   const range = maxValue - minValue || 1;
+  
+  // Calculate X position safely
+  const getXPosition = (index, length) => {
+    if (length <= 1) return 50; // Center if only one point
+    return (index / (length - 1)) * 100;
+  };
+  
+  // Calculate Y position safely
+  const getYPosition = (value) => {
+    if (isNaN(value) || value === null || value === undefined) return 50;
+    return 100 - ((value - minValue) / range) * 100;
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
@@ -236,9 +252,9 @@ export const TrendLine = ({ data, title, height = 200 }) => {
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
-            points={data.map((item, index) => {
-              const x = (index / (data.length - 1)) * 100;
-              const y = 100 - ((item.value - minValue) / range) * 100;
+            points={validData.map((item, index) => {
+              const x = getXPosition(index, validData.length);
+              const y = getYPosition(item.value);
               return `${x}%,${y}%`;
             }).join(' ')}
             className="transition-all duration-1000"
@@ -247,18 +263,18 @@ export const TrendLine = ({ data, title, height = 200 }) => {
           {/* Fill area */}
           <polygon
             fill="url(#gradient)"
-            points={`0,100% ${data.map((item, index) => {
-              const x = (index / (data.length - 1)) * 100;
-              const y = 100 - ((item.value - minValue) / range) * 100;
+            points={`0,100% ${validData.map((item, index) => {
+              const x = getXPosition(index, validData.length);
+              const y = getYPosition(item.value);
               return `${x}%,${y}%`;
             }).join(' ')} 100%,100%`}
             className="transition-all duration-1000"
           />
           
           {/* Data points */}
-          {data.map((item, index) => {
-            const x = (index / (data.length - 1)) * 100;
-            const y = 100 - ((item.value - minValue) / range) * 100;
+          {validData.map((item, index) => {
+            const x = getXPosition(index, validData.length);
+            const y = getYPosition(item.value);
             return (
               <circle
                 key={index}

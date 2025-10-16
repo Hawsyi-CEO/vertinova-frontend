@@ -135,7 +135,12 @@ const Statistics = () => {
     });
 
     transactions.forEach(transaction => {
-      const date = transaction.created_at.split(' ')[0];
+      if (!transaction || !transaction.created_at) return; // Skip if no created_at
+      
+      const date = transaction.created_at.includes(' ') 
+        ? transaction.created_at.split(' ')[0] 
+        : transaction.created_at.split('T')[0]; // Handle both formats
+        
       if (dailyData[date]) {
         dailyData[date].count++;
         if (transaction.type === 'income') {
@@ -147,8 +152,12 @@ const Statistics = () => {
     });
 
     return Object.entries(dailyData).map(([date, data]) => ({
-      date: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
-      ...data
+      label: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+      date: date,
+      value: data.count || 0, // Make sure value is always a number
+      income: data.income || 0,
+      expense: data.expense || 0,
+      count: data.count || 0
     }));
   };
 
@@ -332,10 +341,8 @@ const Statistics = () => {
           </h3>
           <Charts.TrendLine 
             data={statistics.dailyTransactions}
-            xKey="date"
-            yKey="count"
+            title=""
             height={300}
-            formatValue={(value) => `${value} transaksi`}
           />
         </div>
 

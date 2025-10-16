@@ -81,10 +81,13 @@ export const CacheProvider = ({ children }) => {
   }, []);
 
   const shouldRefetchTransactions = useCallback((newTransactionCount) => {
-    const dashboardCache = cache.current.dashboard;
+    const dashboardCache = cache.current.dashboard || {};
     if (!dashboardCache.transactionCount || dashboardCache.transactionCount !== newTransactionCount) {
       // Update transaction count and clear transaction-related caches
-      dashboardCache.transactionCount = newTransactionCount;
+      if (!cache.current.dashboard) {
+        cache.current.dashboard = {};
+      }
+      cache.current.dashboard.transactionCount = newTransactionCount;
       clearCache('transactions');
       clearCache('reports');
       clearCache('statistics');
