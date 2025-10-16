@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "🚀 Building Vertinova Finance App for Production..."
-echo "=================================================="
+echo "🚀 Building Vertinova Finance for Production (vertinova.id)..."
+echo "=============================================================="
 
 # Colors for output
 RED='\033[0;31m'

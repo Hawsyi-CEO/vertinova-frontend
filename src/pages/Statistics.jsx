@@ -57,14 +57,18 @@ const Statistics = () => {
       
       if (response.data.success) {
         const data = response.data.data;
+        const summary = data.summary || {};
+        const transactions = data.transactions || [];
+        
         const processedStatistics = {
-          totalIncome: data.income || 0,
-          totalExpense: data.expenses || 0,
-          netIncome: (data.income || 0) - (data.expenses || 0),
-          transactionCount: data.transactions?.length || 0,
-          topCategories: processTopCategories(data.transactions || []),
-          monthlyTrend: processMonthlyTrend(data.transactions || []),
-          dailyTransactions: processDailyTransactions(data.transactions || [])
+          totalIncome: summary.total_income || 0,
+          totalExpense: summary.total_expense || 0,
+          netIncome: summary.balance || 0,
+          transactionCount: summary.transaction_count || 0,
+          topCategories: processTopCategories(transactions),
+          monthlyTrend: processMonthlyTrend(transactions),
+          dailyTransactions: processDailyTransactions(transactions),
+          chartData: data.chart_data || []
         };
         
         setStatistics(processedStatistics);
@@ -83,7 +87,8 @@ const Statistics = () => {
     const categoryTotals = {};
     transactions.forEach(transaction => {
       if (transaction.type === 'expense') {
-        const category = transaction.expense_category || 'Lainnya';
+        // Backend sudah mengirim field 'category' dari transaction_group atau 'Tidak ada kategori'
+        const category = transaction.category || 'Lainnya';
         categoryTotals[category] = (categoryTotals[category] || 0) + Math.abs(transaction.amount);
       }
     });
@@ -97,7 +102,9 @@ const Statistics = () => {
   const processMonthlyTrend = (transactions) => {
     const monthlyData = {};
     transactions.forEach(transaction => {
-      const month = new Date(transaction.created_at).getMonth();
+      if (!transaction || !transaction.date) return;
+      
+      const month = new Date(transaction.date).getMonth();
       const monthNames = [
         'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
         'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
@@ -109,9 +116,9 @@ const Statistics = () => {
       }
       
       if (transaction.type === 'income') {
-        monthlyData[monthName].income += transaction.amount;
+        monthlyData[monthName].income += transaction.amount || 0;
       } else {
-        monthlyData[monthName].expense += Math.abs(transaction.amount);
+        monthlyData[monthName].expense += Math.abs(transaction.amount || 0);
       }
     });
     
@@ -135,18 +142,17 @@ const Statistics = () => {
     });
 
     transactions.forEach(transaction => {
-      if (!transaction || !transaction.created_at) return; // Skip if no created_at
+      if (!transaction || !transaction.date) return; // Skip if no date
       
-      const date = transaction.created_at.includes(' ') 
-        ? transaction.created_at.split(' ')[0] 
-        : transaction.created_at.split('T')[0]; // Handle both formats
+      // Backend mengirim field 'date' dalam format YYYY-MM-DD
+      const date = transaction.date;
         
       if (dailyData[date]) {
         dailyData[date].count++;
         if (transaction.type === 'income') {
-          dailyData[date].income += transaction.amount;
+          dailyData[date].income += transaction.amount || 0;
         } else {
-          dailyData[date].expense += Math.abs(transaction.amount);
+          dailyData[date].expense += Math.abs(transaction.amount || 0);
         }
       }
     });

@@ -48,8 +48,15 @@ const TransactionGroups = () => {
 
     try {
       setLoading(true);
+      console.log('Fetching all transaction groups...');
       const response = await transactionGroupService.getAll();
-      const groupsData = response.data.data || [];
+      console.log('Full response:', response);
+      
+      // Backend mengirim { success: true, data: [...] }
+      // Service sudah return response.data, jadi kita ambil .data lagi
+      const groupsData = response.data || [];
+      console.log('Groups loaded:', groupsData.length, 'groups');
+      
       setGroups(groupsData);
       
       // Cache the data
@@ -57,6 +64,7 @@ const TransactionGroups = () => {
       
     } catch (error) {
       console.error('Error fetching groups:', error);
+      console.error('Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }

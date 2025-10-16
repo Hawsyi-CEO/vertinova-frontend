@@ -118,6 +118,7 @@ const ModernTransactionForm = ({
               required
               value={formData.transaction_group_id}
               onChange={(value) => setFormData({...formData, transaction_group_id: value})}
+              type={formData.type || 'both'}
               className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-slate-800 transition-all duration-200 bg-gray-50 focus:bg-white"
             />
             <ValidationError field="transaction_group_id" errors={validationErrors} />

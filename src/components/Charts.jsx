@@ -207,24 +207,25 @@ export const TrendLine = ({ data, title, height = 200 }) => {
   const maxValue = Math.max(...validData.map(item => item.value));
   const minValue = Math.min(...validData.map(item => item.value));
   const range = maxValue - minValue || 1;
+  const width = 400; // SVG width in pixels
   
-  // Calculate X position safely
+  // Calculate X position in pixels
   const getXPosition = (index, length) => {
-    if (length <= 1) return 50; // Center if only one point
-    return (index / (length - 1)) * 100;
+    if (length <= 1) return width / 2; // Center if only one point
+    return (index / (length - 1)) * width;
   };
   
-  // Calculate Y position safely
+  // Calculate Y position in pixels
   const getYPosition = (value) => {
-    if (isNaN(value) || value === null || value === undefined) return 50;
-    return 100 - ((value - minValue) / range) * 100;
+    if (isNaN(value) || value === null || value === undefined) return height / 2;
+    return height - ((value - minValue) / range) * (height - 20); // 20px padding
   };
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
       <h3 className="text-lg font-semibold text-slate-800 mb-4">{title}</h3>
       <div className="relative" style={{ height: `${height}px` }}>
-        <svg width="100%" height={height} className="absolute inset-0">
+        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
           <defs>
             <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#1e293b" stopOpacity="0.3" />
@@ -233,43 +234,47 @@ export const TrendLine = ({ data, title, height = 200 }) => {
           </defs>
           
           {/* Grid lines */}
-          {[0, 25, 50, 75, 100].map(percent => (
+          {[0, 0.25, 0.5, 0.75, 1].map((percent, idx) => (
             <line
-              key={percent}
+              key={idx}
               x1="0"
-              y1={`${percent}%`}
-              x2="100%"
-              y2={`${percent}%`}
+              y1={percent * height}
+              x2={width}
+              y2={percent * height}
               stroke="#e5e7eb"
               strokeWidth="1"
             />
           ))}
           
           {/* Trend line */}
-          <polyline
-            fill="none"
-            stroke="#1e293b"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            points={validData.map((item, index) => {
-              const x = getXPosition(index, validData.length);
-              const y = getYPosition(item.value);
-              return `${x}%,${y}%`;
-            }).join(' ')}
-            className="transition-all duration-1000"
-          />
+          {validData.length > 1 && (
+            <polyline
+              fill="none"
+              stroke="#1e293b"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              points={validData.map((item, index) => {
+                const x = getXPosition(index, validData.length);
+                const y = getYPosition(item.value);
+                return `${x},${y}`;
+              }).join(' ')}
+              className="transition-all duration-1000"
+            />
+          )}
           
           {/* Fill area */}
-          <polygon
-            fill="url(#gradient)"
-            points={`0,100% ${validData.map((item, index) => {
-              const x = getXPosition(index, validData.length);
-              const y = getYPosition(item.value);
-              return `${x}%,${y}%`;
-            }).join(' ')} 100%,100%`}
-            className="transition-all duration-1000"
-          />
+          {validData.length > 1 && (
+            <polygon
+              fill="url(#gradient)"
+              points={`0,${height} ${validData.map((item, index) => {
+                const x = getXPosition(index, validData.length);
+                const y = getYPosition(item.value);
+                return `${x},${y}`;
+              }).join(' ')} ${height},${height}`}
+              className="transition-all duration-1000"
+            />
+          )}
           
           {/* Data points */}
           {validData.map((item, index) => {
@@ -278,8 +283,8 @@ export const TrendLine = ({ data, title, height = 200 }) => {
             return (
               <circle
                 key={index}
-                cx={`${x}%`}
-                cy={`${y}%`}
+                cx={x}
+                cy={y}
                 r="4"
                 fill="#1e293b"
                 className="transition-all duration-1000"
@@ -289,9 +294,10 @@ export const TrendLine = ({ data, title, height = 200 }) => {
         </svg>
       </div>
       
+      {/* Labels */}
       <div className="flex justify-between mt-4 text-sm text-slate-600">
-        {data.map((item, index) => (
-          <span key={index}>{item.label}</span>
+        {validData.map((item, index) => (
+          <span key={index}>{item.label || item.date}</span>
         ))}
       </div>
     </div>

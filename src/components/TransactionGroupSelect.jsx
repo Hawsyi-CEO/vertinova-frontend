@@ -24,10 +24,21 @@ const TransactionGroupSelect = ({
   const fetchGroups = async () => {
     try {
       setLoading(true);
+      console.log('Fetching transaction groups for type:', type);
       const response = await transactionGroupService.getOptions(type);
-      setGroups(response.data);
+      console.log('Transaction groups response:', response);
+      
+      if (response.success && Array.isArray(response.data)) {
+        setGroups(response.data);
+        console.log('Groups loaded:', response.data.length);
+      } else {
+        console.error('Unexpected response format:', response);
+        setGroups([]);
+      }
     } catch (error) {
       console.error('Error fetching transaction groups:', error);
+      console.error('Error details:', error.response?.data);
+      setGroups([]);
     } finally {
       setLoading(false);
     }
@@ -107,6 +118,9 @@ const TransactionGroupSelect = ({
           required={required}
         >
           <option value="">{placeholder}</option>
+          {groups.length === 0 && !loading && (
+            <option disabled>Tidak ada kelompok transaksi</option>
+          )}
           {type === 'both' && (
             <>
               {renderGroupsByType('income')}
