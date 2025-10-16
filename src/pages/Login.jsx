@@ -64,9 +64,7 @@ const Login = () => {
             <h1 className="text-xl font-bold text-gray-800 mb-1">
               Selamat Datang di Vertinova
             </h1>
-            <p className="text-xs text-gray-600">
-              Sistem Manajemen Keuangan Profesional
-            </p>
+           
           </div>
 
           {/* Login Form */}

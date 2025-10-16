@@ -5,42 +5,18 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   
-  // Production optimizations
+  // Production build settings
   build: {
-    target: 'esnext',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          icons: ['@heroicons/react'],
-        },
-      },
-    },
-    cssCodeSplit: true,
+    outDir: 'dist',
     sourcemap: false,
     chunkSizeWarningLimit: 1000,
   },
 
-  // Development server optimizations
+  // Development server
   server: {
     port: 5173,
     host: true,
     cors: true,
-    hmr: {
-      overlay: false
-    }
-  },
-
-  // Performance optimizations
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', '@heroicons/react'],
   },
 
   // CSS optimizations

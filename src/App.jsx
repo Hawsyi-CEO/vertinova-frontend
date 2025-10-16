@@ -19,20 +19,21 @@ function App() {
         <Router>
         <div className="min-h-screen bg-white">
           <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={
+            {/* Login sebagai halaman utama */}
+            <Route path="/" element={<Login />} />
+            
+            {/* Dashboard dan protected routes */}
+            <Route element={
               <ProtectedRoute>
                 <Layout />
               </ProtectedRoute>
             }>
-              <Route index element={<Navigate to="/dashboard" />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="transactions" element={<Transactions />} />
-              <Route path="transaction-groups" element={<TransactionGroups />} />
-              <Route path="reports" element={<Reports />} />
-              <Route path="statistics" element={<Statistics />} />
-              <Route path="users" element={<Users />} />
-              <Route path="users" element={<Users />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/transactions" element={<Transactions />} />
+              <Route path="/transaction-groups" element={<TransactionGroups />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/statistics" element={<Statistics />} />
+              <Route path="/users" element={<Users />} />
             </Route>
           </Routes>
         </div>
