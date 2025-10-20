@@ -24,7 +24,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       shortName: 'Dashboard'
     },
     {
-      name: 'Transaksi',
+      name: 'Riwayat Transaksi',
       href: '/transactions',
       icon: CreditCardIcon,
       shortName: 'Transaksi'

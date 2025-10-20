@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
 import TransactionGroups from './pages/TransactionGroups'
+import TransactionGroupDetail from './pages/TransactionGroupDetail'
 import Users from './pages/Users'
 import Reports from './pages/Reports'
 import Statistics from './pages/Statistics'
@@ -31,6 +32,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/transaction-groups" element={<TransactionGroups />} />
+              <Route path="/transaction-groups/:id" element={<TransactionGroupDetail />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/statistics" element={<Statistics />} />
               <Route path="/users" element={<Users />} />

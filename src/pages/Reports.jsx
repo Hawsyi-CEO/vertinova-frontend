@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCache } from '../context/CacheContext';
+import { formatCurrencyResponsive, formatCurrencyCompact, safeNumber } from '../utils/currencyFormat';
 import { 
   DocumentChartBarIcon,
   ArrowDownIcon,
-  CalendarIcon
+  CalendarIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '../components/LoadingComponents';
 
@@ -18,7 +21,7 @@ const Reports = () => {
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(20);
+  const [itemsPerPage] = useState(4);
 
   const months = [
     { value: 1, label: 'Januari' },
@@ -76,14 +79,17 @@ const Reports = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  // Hook for detecting mobile screen
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const getMonthName = (monthNum) => {
     return months.find(m => m.value === monthNum)?.label || monthNum;
@@ -233,16 +239,20 @@ const Reports = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-slate-50 rounded-lg">
                 <p className="text-sm text-slate-600">Total Pemasukan</p>
-                <p className="text-lg font-bold text-green-600">{formatCurrency(reportData.summary.total_income)}</p>
+                <p className="text-sm md:text-base lg:text-lg font-bold text-green-600">
+                  {isMobile ? formatCurrencyCompact(safeNumber(reportData.summary.total_income)) : formatCurrencyResponsive(reportData.summary.total_income, false)}
+                </p>
               </div>
               <div className="text-center p-4 bg-slate-50 rounded-lg">
                 <p className="text-sm text-slate-600">Total Pengeluaran</p>
-                <p className="text-lg font-bold text-red-600">{formatCurrency(reportData.summary.total_expense)}</p>
+                <p className="text-sm md:text-base lg:text-lg font-bold text-red-600">
+                  {isMobile ? formatCurrencyCompact(safeNumber(reportData.summary.total_expense)) : formatCurrencyResponsive(reportData.summary.total_expense, false)}
+                </p>
               </div>
               <div className="text-center p-4 bg-slate-50 rounded-lg">
                 <p className="text-sm text-slate-600">Saldo Bersih</p>
-                <p className={`text-lg font-bold ${reportData.summary.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(reportData.summary.balance)}
+                <p className={`text-sm md:text-base lg:text-lg font-bold ${safeNumber(reportData.summary.balance) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {isMobile ? formatCurrencyCompact(safeNumber(reportData.summary.balance)) : formatCurrencyResponsive(reportData.summary.balance, false)}
                 </p>
               </div>
               <div className="text-center p-4 bg-slate-50 rounded-lg">
@@ -326,7 +336,7 @@ const Reports = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <span className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
-                            {formatCurrency(transaction.amount)}
+                            {isMobile ? formatCurrencyCompact(safeNumber(transaction.amount)) : formatCurrencyResponsive(transaction.amount, false)}
                           </span>
                         </td>
                       </tr>
@@ -371,7 +381,7 @@ const Reports = () => {
                         </p>
                       </div>
                       <p className={`text-sm font-bold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {formatCurrency(transaction.amount)}
+                        {formatCurrencyResponsive(transaction.amount, true)}
                       </p>
                     </div>
                   </div>
@@ -385,28 +395,59 @@ const Reports = () => {
 
             {/* Pagination */}
             {getTotalPages() > 1 && (
-              <div className="px-6 py-4 border-t border-gray-100">
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
-                    Menampilkan {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, reportData.transactions?.length || 0)} dari {reportData.transactions?.length || 0} transaksi
+                  <div className="flex items-center text-sm text-gray-700">
+                    <span>
+                      Menampilkan {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, reportData.transactions?.length || 0)} dari {reportData.transactions?.length || 0} transaksi
+                    </span>
                   </div>
-                  <div className="flex space-x-2">
+                  
+                  <div className="flex items-center space-x-2">
+                    {/* Previous Button */}
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
-                      className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={`p-2 rounded-lg transition-colors ${
+                        currentPage === 1
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : 'text-slate-800 hover:bg-slate-100'
+                      }`}
                     >
-                      Sebelumnya
+                      <ChevronLeftIcon className="h-5 w-5" />
                     </button>
-                    <span className="flex items-center px-3 py-2 text-sm text-gray-700">
-                      Halaman {currentPage} dari {getTotalPages()}
-                    </span>
+
+                    {/* Page Numbers */}
+                    <div className="flex space-x-1">
+                      {[...Array(getTotalPages())].map((_, index) => {
+                        const page = index + 1;
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                              currentPage === page
+                                ? 'bg-slate-800 text-white'
+                                : 'text-slate-800 hover:bg-slate-100'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Next Button */}
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(prev + 1, getTotalPages()))}
                       disabled={currentPage === getTotalPages()}
-                      className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={`p-2 rounded-lg transition-colors ${
+                        currentPage === getTotalPages()
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : 'text-slate-800 hover:bg-slate-100'
+                      }`}
                     >
-                      Selanjutnya
+                      <ChevronRightIcon className="h-5 w-5" />
                     </button>
                   </div>
                 </div>

@@ -1,9 +1,16 @@
 import api from './api';
 
 export const transactionGroupService = {
-  // Get all transaction groups
+  // Get all transaction groups (optimized)
   getAll: async () => {
+    console.log('📡 API Request: Getting all transaction groups...');
+    const startTime = performance.now();
+    
     const response = await api.get('/transaction-groups');
+    
+    const endTime = performance.now();
+    console.log(`⚡ API Response time: ${(endTime - startTime).toFixed(2)}ms`);
+    
     return response.data;
   },
   

@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import TransactionGroupSelect from './TransactionGroupSelect';
 import ValidationError from './ValidationError';
+import { formatCurrencyInput, parseCurrencyInput } from '../utils/currencyFormat';
 
 const ModernTransactionForm = ({ 
   formData, 
@@ -18,7 +19,8 @@ const ModernTransactionForm = ({
   saving, 
   validationErrors, 
   editingTransaction,
-  onCancel 
+  onCancel,
+  groupId // Add groupId prop to identify if we're in a group context
 }) => {
   const expenseCategories = [
     'Operasional',
@@ -31,10 +33,38 @@ const ModernTransactionForm = ({
     'Lainnya'
   ];
 
+  // Handle amount input change
+  const handleAmountChange = (e) => {
+    const inputValue = e.target.value;
+    const numericValue = parseCurrencyInput(inputValue);
+    setFormData({...formData, amount: numericValue});
+  };
+
+  // Display formatted amount
+  const displayAmount = formatCurrencyInput(formData.amount);
+
   return (
-    <div className="h-full flex flex-col bg-white">
-      <form id="transaction-form" onSubmit={onSubmit} className="flex-1 overflow-y-auto">
+    <div className="h-full flex flex-col">
+      <form id="transaction-form" onSubmit={onSubmit} className="flex-1 overflow-y-auto bg-gray-50">
         <div className="p-6 space-y-6">
+          {/* Tipe Transaksi - Moved to top */}
+          <div className="space-y-3">
+            <label className="flex items-center text-sm font-semibold text-gray-700">
+              <CurrencyDollarIcon className="w-5 h-5 mr-2 text-slate-600" />
+              Tipe Transaksi
+            </label>
+            <select
+              required
+              value={formData.type}
+              onChange={(e) => setFormData({...formData, type: e.target.value})}
+              className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-slate-800 transition-all duration-200 bg-gray-50 focus:bg-white"
+            >
+              <option value="income">Pemasukan</option>
+              <option value="expense">Pengeluaran</option>
+            </select>
+            <ValidationError field="type" errors={validationErrors} />
+          </div>
+
           {/* Deskripsi */}
           <div className="space-y-3">
             <label className="flex items-center text-sm font-semibold text-gray-700">
@@ -52,24 +82,6 @@ const ModernTransactionForm = ({
             <ValidationError field="description" errors={validationErrors} />
           </div>
 
-          {/* Tipe Transaksi */}
-          <div className="space-y-3">
-            <label className="flex items-center text-sm font-semibold text-gray-700">
-              <CurrencyDollarIcon className="w-5 h-5 mr-2 text-slate-600" />
-              Tipe Transaksi
-            </label>
-            <select
-              required
-              value={formData.type}
-              onChange={(e) => setFormData({...formData, type: e.target.value})}
-              className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-slate-800 transition-all duration-200 bg-gray-50 focus:bg-white"
-            >
-              <option value="income">💰 Pemasukan</option>
-              <option value="expense">💸 Pengeluaran</option>
-            </select>
-            <ValidationError field="type" errors={validationErrors} />
-          </div>
-
           {/* Jumlah */}
           <div className="space-y-3">
             <label className="flex items-center text-sm font-semibold text-gray-700">
@@ -78,15 +90,17 @@ const ModernTransactionForm = ({
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <span className="text-gray-500 text-sm font-medium">Rp</span>
+                <span className="text-gray-500 text-sm font-medium">Rp.</span>
               </div>
               <input
-                type="number"
+                type="text"
                 required
-                value={formData.amount}
-                onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-slate-800 transition-all duration-200 bg-gray-50 focus:bg-white"
-                placeholder="Masukkan jumlah..."
+                value={displayAmount}
+                onChange={handleAmountChange}
+                className="w-full pl-14 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-slate-800 transition-all duration-200 bg-gray-50 focus:bg-white"
+                placeholder="1.000.000"
+                inputMode="numeric"
+                pattern="[0-9.,]*"
               />
             </div>
             <ValidationError field="amount" errors={validationErrors} />
@@ -108,21 +122,23 @@ const ModernTransactionForm = ({
             <ValidationError field="date" errors={validationErrors} />
           </div>
 
-          {/* Kelompok Transaksi */}
-          <div className="space-y-3">
-            <label className="flex items-center text-sm font-semibold text-gray-700">
-              <FolderIcon className="w-5 h-5 mr-2 text-slate-600" />
-              Kelompok Transaksi
-            </label>
-            <TransactionGroupSelect
-              required
-              value={formData.transaction_group_id}
-              onChange={(value) => setFormData({...formData, transaction_group_id: value})}
-              type={formData.type || 'both'}
-              className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-slate-800 transition-all duration-200 bg-gray-50 focus:bg-white"
-            />
-            <ValidationError field="transaction_group_id" errors={validationErrors} />
-          </div>
+          {/* Kelompok Transaksi - Only show if not in group context */}
+          {!groupId && (
+            <div className="space-y-3">
+              <label className="flex items-center text-sm font-semibold text-gray-700">
+                <FolderIcon className="w-5 h-5 mr-2 text-slate-600" />
+                Kelompok Transaksi
+              </label>
+              <TransactionGroupSelect
+                required
+                value={formData.transaction_group_id}
+                onChange={(value) => setFormData({...formData, transaction_group_id: value})}
+                type={formData.type || 'both'}
+                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-slate-800 transition-all duration-200 bg-gray-50 focus:bg-white"
+              />
+              <ValidationError field="transaction_group_id" errors={validationErrors} />
+            </div>
+          )}
 
           {/* Kategori Pengeluaran (hanya untuk expense) */}
           {formData.type === 'expense' && (
@@ -166,7 +182,7 @@ const ModernTransactionForm = ({
       </form>
       
       {/* Action Buttons - Fixed at bottom */}
-      <div className="p-6 bg-white border-t border-gray-200 flex space-x-4">
+      <div className="p-6 bg-white border-t border-gray-200 flex space-x-4" style={{ borderBottomLeftRadius: '20px' }}>
         <button
           type="button"
           onClick={onCancel}

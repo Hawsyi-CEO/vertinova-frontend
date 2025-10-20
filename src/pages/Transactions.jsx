@@ -3,18 +3,15 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCache } from '../context/CacheContext';
-import SidebarModal from '../components/SidebarModal';
-import ModernTransactionForm from '../components/ModernTransactionForm';
+import { formatCurrencyResponsive, formatCurrencyCompact, safeNumber } from '../utils/currencyFormat';
 import { 
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  EyeIcon,
   FunnelIcon,
   MagnifyingGlassIcon,
   ArrowUpIcon,
   ArrowDownIcon,
-  FolderIcon
+  ClockIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 
 const Transactions = () => {
@@ -22,8 +19,6 @@ const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState(null);
   const { user } = useAuth();
 
   // Filter states
@@ -37,21 +32,9 @@ const Transactions = () => {
     sortOrder: 'desc'
   });
 
-  const [formData, setFormData] = useState({
-    description: '',
-    type: 'income',
-    amount: '',
-    date: new Date().toISOString().split('T')[0],
-    category: '',
-    transaction_group_id: '',
-    expense_category: '',
-    user_id: '',
-    notes: ''
-  });
-
-  const [saving, setSaving] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [validationErrors, setValidationErrors] = useState({});
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(4);
 
   useEffect(() => {
     fetchTransactions();
@@ -59,7 +42,7 @@ const Transactions = () => {
 
   const fetchTransactions = async () => {
     // Check if we have valid cached data
-    if (isCacheValid('transactions', 3 * 60 * 1000)) {
+    if (isCacheValid('transactions', 2 * 60 * 1000)) { // Reduced to 2 minutes
       const cachedData = getCache('transactions');
       if (cachedData.data) {
         setTransactions(cachedData.data);
@@ -70,13 +53,15 @@ const Transactions = () => {
     }
 
     try {
+      console.log('🔄 Fetching transactions...');
       const response = await api.get('/transactions');
       const data = response.data.data || [];
       setTransactions(data);
       setFilteredTransactions(data);
       
-      // Cache the transactions data
+      // Cache the transactions data with shorter expiry
       setCache('transactions', { data });
+      console.log('✅ Transactions cached successfully');
       
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -161,6 +146,29 @@ const Transactions = () => {
     setFilteredTransactions(filtered);
   };
 
+  // Pagination helpers
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
+
+  const goToPage = (page) => {
+    setCurrentPage(page);
+  };
+
+  const goToPreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const goToNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+
+  // Reset pagination when filtered transactions change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredTransactions.length]);
+
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
@@ -186,96 +194,17 @@ const Transactions = () => {
     return Array.from(categories).sort();
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setValidationErrors({});
+  // Hook for detecting mobile screen
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
     
-    try {
-      console.log('Submitting transaction data:', formData);
-      
-      if (editingTransaction) {
-        await api.put(`/transactions/${editingTransaction.id}`, formData);
-      } else {
-        await api.post('/transactions', formData);
-      }
-      
-      // Close modal and reset form
-      setShowModal(false);
-      setEditingTransaction(null);
-      setFormData({
-        description: '',
-        type: 'income',
-        amount: '',
-        date: new Date().toISOString().split('T')[0],
-        category: '',
-        transaction_group_id: '',
-        expense_category: '',
-        user_id: '',
-        notes: ''
-      });
-      
-      // Clear cache and refresh data
-      clearCache('transactions');
-      clearCache('dashboard');
-      clearCache('statistics');
-      clearCache('reports');
-      await fetchTransactions();
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
-      
-    } catch (error) {
-      console.error('Error saving transaction:', error);
-      console.error('Error response:', error.response?.data);
-      
-      if (error.response?.status === 422) {
-        setValidationErrors(error.response.data.errors || {});
-      } else {
-        alert('Terjadi kesalahan saat menyimpan transaksi');
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleEdit = (transaction) => {
-    setEditingTransaction(transaction);
-    setFormData({
-      description: transaction.description,
-      type: transaction.type,
-      amount: transaction.amount,
-      date: transaction.date,
-      category: transaction.category || '',
-      transaction_group_id: transaction.transaction_group_id || '',
-      expense_category: transaction.expense_category || '',
-      user_id: transaction.user_id,
-      notes: transaction.notes || ''
-    });
-    setShowModal(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
-      try {
-        await api.delete(`/transactions/${id}`);
-        // Clear cache and refresh data
-        clearCache('transactions');
-        clearCache('dashboard');
-        clearCache('statistics');
-        clearCache('reports');
-        fetchTransactions();
-      } catch (error) {
-        console.error('Error deleting transaction:', error);
-      }
-    }
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR'
-    }).format(amount);
-  };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   if (loading) {
     return (
@@ -287,47 +216,22 @@ const Transactions = () => {
 
   return (
     <div className="space-y-6">
-      {/* Success Notification */}
-      {showSuccess && (
-        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 max-w-sm">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-            <div>
-              <p className="font-medium">Berhasil!</p>
-              <p className="text-sm text-green-100">Transaksi berhasil disimpan</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 flex items-center">
-              <FolderIcon className="w-8 h-8 mr-3 text-slate-800" />
-              Transaksi
+              <ClockIcon className="w-8 h-8 mr-3 text-slate-800" />
+              Riwayat Transaksi
             </h1>
             <p className="text-slate-600 mt-1">
-              Kelola semua transaksi keuangan dengan mudah
+              Lihat semua riwayat transaksi dan mutasi keuangan
             </p>
           </div>
-          {(user?.role === 'admin' || user?.role === 'finance') && (
-            <button
-              onClick={() => setShowModal(true)}
-              className="group bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-3 transform hover:scale-105"
-            >
-              <div className="p-1 bg-white bg-opacity-20 rounded-lg group-hover:bg-opacity-30 transition-all">
-                <PlusIcon className="w-5 h-5" />
-              </div>
-              <span className="font-medium">Tambah Transaksi</span>
-            </button>
-          )}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800">
+              <span className="font-medium">💡 Info:</span> Untuk menambah transaksi baru, silakan pilih kelompok transaksi terlebih dahulu
+            </p>
+          </div>
         </div>
       </div>
 
@@ -520,16 +424,11 @@ const Transactions = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   User
                 </th>
-                {(user?.role === 'admin' || user?.role === 'finance') && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Aksi
-                  </th>
-                )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTransactions.length > 0 ? (
-                filteredTransactions.map((transaction) => (
+              {currentTransactions.length > 0 ? (
+                currentTransactions.map((transaction) => (
                   <tr key={transaction.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {new Date(transaction.date).toLocaleDateString('id-ID')}
@@ -563,32 +462,16 @@ const Transactions = () => {
                     <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
                       transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {transaction.type === 'income' ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount))}
+                      {transaction.type === 'income' ? '+' : '-'}{isMobile ? formatCurrencyCompact(safeNumber(Math.abs(transaction.amount))) : formatCurrencyResponsive(Math.abs(transaction.amount), false)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {transaction.user?.name || '-'}
                     </td>
-                    {(user?.role === 'admin' || user?.role === 'finance') && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                        <button
-                          onClick={() => handleEdit(transaction)}
-                          className="text-slate-800 hover:text-slate-600"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(transaction.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Hapus
-                        </button>
-                      </td>
-                    )}
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
                     {transactions.length === 0 ? 'Belum ada transaksi' : 'Tidak ada transaksi yang sesuai dengan filter'}
                   </td>
                 </tr>
@@ -596,31 +479,68 @@ const Transactions = () => {
             </tbody>
           </table>
         </div>
-      </div>
 
-      {/* Sidebar Modal */}
-      <SidebarModal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setEditingTransaction(null);
-        }}
-        title={editingTransaction ? '✏️ Edit Transaksi' : '➕ Tambah Transaksi Baru'}
-        size="lg"
-      >
-        <ModernTransactionForm
-          formData={formData}
-          setFormData={setFormData}
-          onSubmit={handleSubmit}
-          saving={saving}
-          validationErrors={validationErrors}
-          editingTransaction={editingTransaction}
-          onCancel={() => {
-            setShowModal(false);
-            setEditingTransaction(null);
-          }}
-        />
-      </SidebarModal>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center text-sm text-gray-700">
+                <span>
+                  Menampilkan {startIndex + 1} - {Math.min(endIndex, filteredTransactions.length)} dari {filteredTransactions.length} transaksi
+                </span>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                {/* Previous Button */}
+                <button
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className={`p-2 rounded-lg transition-colors ${
+                    currentPage === 1
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : 'text-slate-800 hover:bg-slate-100'
+                  }`}
+                >
+                  <ChevronLeftIcon className="h-5 w-5" />
+                </button>
+
+                {/* Page Numbers */}
+                <div className="flex space-x-1">
+                  {[...Array(totalPages)].map((_, index) => {
+                    const page = index + 1;
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => goToPage(page)}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          currentPage === page
+                            ? 'bg-slate-800 text-white'
+                            : 'text-slate-800 hover:bg-slate-100'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`p-2 rounded-lg transition-colors ${
+                    currentPage === totalPages
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : 'text-slate-800 hover:bg-slate-100'
+                  }`}
+                >
+                  <ChevronRightIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

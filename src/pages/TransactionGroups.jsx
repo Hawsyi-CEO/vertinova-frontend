@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCache } from '../context/CacheContext';
 import { transactionGroupService } from '../services/transactionGroupService';
@@ -20,14 +21,13 @@ const TransactionGroups = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
-  const [activeTab, setActiveTab] = useState('all'); // 'all', 'income', 'expense'
+
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    type: 'income',
     color: '#3B82F6'
   });
 
@@ -37,7 +37,7 @@ const TransactionGroups = () => {
 
   const fetchGroups = async () => {
     // Check if we have valid cached data
-    if (isCacheValid('transactionGroups', 5 * 60 * 1000)) {
+    if (isCacheValid('transactionGroups', 2 * 60 * 1000)) { // Reduced to 2 minutes
       const cachedData = getCache('transactionGroups');
       if (cachedData.data) {
         setGroups(cachedData.data);
@@ -48,14 +48,13 @@ const TransactionGroups = () => {
 
     try {
       setLoading(true);
-      console.log('Fetching all transaction groups...');
+      console.log('🔄 Fetching transaction groups...');
       const response = await transactionGroupService.getAll();
-      console.log('Full response:', response);
       
       // Backend mengirim { success: true, data: [...] }
       // Service sudah return response.data, jadi kita ambil .data lagi
       const groupsData = response.data || [];
-      console.log('Groups loaded:', groupsData.length, 'groups');
+      console.log('✅ Groups loaded:', groupsData.length, 'groups');
       
       setGroups(groupsData);
       
@@ -96,7 +95,6 @@ const TransactionGroups = () => {
     setFormData({
       name: group.name,
       description: group.description || '',
-      type: group.type,
       color: group.color || '#3B82F6'
     });
     setShowModal(true);
@@ -123,7 +121,6 @@ const TransactionGroups = () => {
     setFormData({
       name: '',
       description: '',
-      type: 'income',
       color: '#3B82F6'
     });
   };
@@ -134,18 +131,15 @@ const TransactionGroups = () => {
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
-  const filteredGroups = groups.filter(group => {
-    if (activeTab === 'all') return true;
-    return group.type === activeTab;
-  });
-
-  const incomeGroups = groups.filter(g => g.type === 'income');
-  const expenseGroups = groups.filter(g => g.type === 'expense');
+  const filteredGroups = groups;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-800"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-800 mx-auto"></div>
+          <p className="mt-4 text-sm text-gray-600">Memuat kelompok transaksi...</p>
+        </div>
       </div>
     );
   }
@@ -186,72 +180,23 @@ const TransactionGroups = () => {
           )}
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
-            <div className="flex items-center">
-              <ArrowTrendingUpIcon className="h-8 w-8 text-green-600" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-green-900">Kelompok Pemasukan</p>
-                <p className="text-2xl font-bold text-green-700">{incomeGroups.length}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-r from-red-50 to-red-100 rounded-lg p-4 border border-red-200">
-            <div className="flex items-center">
-              <ArrowTrendingDownIcon className="h-8 w-8 text-red-600" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-red-900">Kelompok Pengeluaran</p>
-                <p className="text-2xl font-bold text-red-700">{expenseGroups.length}</p>
-              </div>
-            </div>
-          </div>
-          
+        {/* Stats Card */}
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-6">
           <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
             <div className="flex items-center">
               <ChartBarIcon className="h-8 w-8 text-slate-800" />
               <div className="ml-3">
-                <p className="text-sm font-medium text-blue-900">Total Kelompok</p>
+                <p className="text-sm font-medium text-blue-900">Total Kelompok Transaksi</p>
                 <p className="text-2xl font-bold text-slate-800">{groups.length}</p>
+                <p className="text-xs text-blue-600 mt-1">Kelompok universal untuk pemasukan & pengeluaran</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filter Tabs */}
+      {/* Groups Grid */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
-            {[
-              { key: 'all', name: 'Semua', count: groups.length },
-              { key: 'income', name: 'Pemasukan', count: incomeGroups.length },
-              { key: 'expense', name: 'Pengeluaran', count: expenseGroups.length }
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                  activeTab === tab.key
-                    ? 'border-slate-500 text-slate-800'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {tab.name}
-                <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${
-                  activeTab === tab.key 
-                    ? 'bg-slate-100 text-slate-800' 
-                    : 'bg-gray-100 text-gray-900'
-                }`}>
-                  {tab.count}
-                </span>
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Groups Grid */}
         <div className="p-6">
           {filteredGroups.length === 0 ? (
             <div className="text-center py-12">
@@ -266,8 +211,10 @@ const TransactionGroups = () => {
               {filteredGroups.map((group) => (
                 <div
                   key={group.id}
-                  className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                  className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 transform hover:scale-105 relative group"
                 >
+                  <Link to={`/transaction-groups/${group.id}`} className="absolute inset-0 z-10"></Link>
+                  
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <div
@@ -276,18 +223,14 @@ const TransactionGroups = () => {
                       ></div>
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">{group.name}</h3>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          group.type === 'income' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {group.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                          Universal
                         </span>
                       </div>
                     </div>
                     
                     {(user?.role === 'admin' || user?.role === 'finance') && (
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-2 relative z-20">
                         <button
                           onClick={() => handleEdit(group)}
                           className="p-2 text-gray-400 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors"
@@ -342,21 +285,6 @@ const TransactionGroups = () => {
                   placeholder="Masukkan nama kelompok"
                   required
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipe Transaksi *
-                </label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 focus:border-slate-800 transition-colors"
-                  required
-                >
-                  <option value="income">Pemasukan</option>
-                  <option value="expense">Pengeluaran</option>
-                </select>
               </div>
 
               <div>
