@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCache } from '../context/CacheContext';
@@ -26,6 +26,11 @@ const Dashboard = () => {
   });
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Redirect Hayabusa users to their specific dashboard
+  if (user?.role === 'hayabusa') {
+    return <Navigate to="/hayabusa/dashboard" replace />;
+  }
 
   // Pagination states for recent transactions
   const [currentPage, setCurrentPage] = useState(1);

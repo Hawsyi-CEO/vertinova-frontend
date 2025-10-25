@@ -21,13 +21,22 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       name: 'Dashboard',
       href: '/dashboard',
       icon: HomeIcon,
-      shortName: 'Dashboard'
+      shortName: 'Dashboard',
+      excludeRoles: ['hayabusa']
+    },
+    {
+      name: 'Dashboard Hayabusa',
+      href: '/hayabusa/dashboard',
+      icon: HomeIcon,
+      shortName: 'Dashboard',
+      roles: ['hayabusa']
     },
     {
       name: 'Riwayat Transaksi',
       href: '/transactions',
       icon: CreditCardIcon,
-      shortName: 'Transaksi'
+      shortName: 'Transaksi',
+      excludeRoles: ['hayabusa']
     },
     {
       name: 'Kelompok Transaksi',
@@ -59,9 +68,18 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     },
   ];
 
-  const filteredMenuItems = menuItems.filter(item => 
-    !item.roles || item.roles.includes(user?.role)
-  );
+  const filteredMenuItems = menuItems.filter(item => {
+    // If item has specific roles, check if user has that role
+    if (item.roles) {
+      return item.roles.includes(user?.role);
+    }
+    // If item has excluded roles, check if user is NOT in that list
+    if (item.excludeRoles) {
+      return !item.excludeRoles.includes(user?.role);
+    }
+    // Otherwise, show the item
+    return true;
+  });
 
   return (
     <>
@@ -78,7 +96,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         fixed lg:static inset-y-0 left-0 z-30
         ${isOpen && !window.matchMedia('(min-width: 1024px)').matches ? 'w-64' : isOpen ? 'w-64' : 'w-16'}
-        bg-white min-h-screen shadow-lg border-r border-gray-100
+        bg-white min-h-screen shadow-xl border-r border-gray-100
         transition-all duration-300 ease-in-out
         flex flex-col
       `}>
@@ -92,7 +110,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           )}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-lg hover:bg-slate-100 transition-colors hidden lg:flex"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors hidden lg:flex"
           >
             {isOpen ? (
               <ChevronLeftIcon className="w-5 h-5 text-slate-600" />
@@ -116,8 +134,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                   flex items-center mx-2 mb-1 px-3 py-3 rounded-lg
                   transition-all duration-200 ease-in-out
                   ${isActive
-                    ? 'bg-slate-800 text-white shadow-md'
-                    : 'text-slate-700 hover:bg-slate-50 hover:text-slate-800'
+                    ? 'bg-blue-50 text-blue-600 shadow-sm border border-blue-100'
+                    : 'text-slate-700 hover:bg-gray-50 hover:text-slate-900'
                   }
                 `}
                 title={!isOpen ? item.name : ''}
@@ -137,8 +155,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         {isOpen && user && (
           <div className="p-4 border-t border-gray-100">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-bold">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 text-sm font-bold">
                   {user.name?.charAt(0).toUpperCase()}
                 </span>
               </div>

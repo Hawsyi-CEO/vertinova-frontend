@@ -5,6 +5,7 @@ import { useCache } from '../context/CacheContext';
 import api from '../services/api';
 import SidebarModal from '../components/SidebarModal';
 import ModernTransactionForm from '../components/ModernTransactionForm';
+import HayabusaUserManagement from '../components/HayabusaUserManagement';
 import { formatCurrencyResponsive, formatCurrencyCompact, safeNumber } from '../utils/currencyFormat';
 import {
   ArrowLeftIcon,
@@ -18,7 +19,8 @@ import {
   ArrowTrendingDownIcon,
   FolderIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  UserPlusIcon
 } from '@heroicons/react/24/outline';
 
 const TransactionGroupDetail = () => {
@@ -31,6 +33,7 @@ const TransactionGroupDetail = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showHayabusaManagement, setShowHayabusaManagement] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -291,26 +294,41 @@ const TransactionGroupDetail = () => {
             )}
           </div>
           
-          {(user?.role === 'admin' || user?.role === 'finance' || user?.role === 'user') && (
-            <button
-              onClick={() => setShowModal(true)}
-              className="group bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-3 transform hover:scale-105"
-            >
-              <div className="p-1 bg-white bg-opacity-20 rounded-lg group-hover:bg-opacity-30 transition-all">
-                <PlusIcon className="w-5 h-5" />
-              </div>
-              <span className="font-medium">Tambah Transaksi</span>
-            </button>
-          )}
+          <div className="flex items-center space-x-3">
+            {/* Manage Hayabusa button - only for Simpaskor group */}
+            {group?.name?.toLowerCase().includes('simpaskor') && 
+             (user?.role === 'admin' || user?.role === 'finance') && (
+              <button
+                onClick={() => setShowHayabusaManagement(true)}
+                className="bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 text-white px-4 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2"
+              >
+                <UserPlusIcon className="w-5 h-5" />
+                <span>Kelola Akun Hayabusa</span>
+              </button>
+            )}
+
+            {/* Add Transaction button */}
+            {(user?.role === 'admin' || user?.role === 'finance' || user?.role === 'user') && (
+              <button
+                onClick={() => setShowModal(true)}
+                className="group bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-3 transform hover:scale-105"
+              >
+                <div className="p-1 bg-white bg-opacity-20 rounded-lg group-hover:bg-opacity-30 transition-all">
+                  <PlusIcon className="w-5 h-5" />
+                </div>
+                <span className="font-medium">Tambah Transaksi</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+        <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
           <div className="flex items-center">
-            <div className="p-3 bg-slate-100 rounded-lg">
-              <ArrowTrendingUpIcon className="h-6 w-6 text-slate-800" />
+            <div className="p-3 bg-green-100 rounded-lg">
+              <ArrowTrendingUpIcon className="h-6 w-6 text-green-600" />
             </div>
             <div className="ml-4">
               <p className="text-gray-600 text-sm font-medium">Total Pemasukan</p>
@@ -321,10 +339,10 @@ const TransactionGroupDetail = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+        <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
           <div className="flex items-center">
-            <div className="p-3 bg-slate-100 rounded-lg">
-              <ArrowTrendingDownIcon className="h-6 w-6 text-slate-800" />
+            <div className="p-3 bg-red-100 rounded-lg">
+              <ArrowTrendingDownIcon className="h-6 w-6 text-red-600" />
             </div>
             <div className="ml-4">
               <p className="text-gray-600 text-sm font-medium">Total Pengeluaran</p>
@@ -335,14 +353,14 @@ const TransactionGroupDetail = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-xl p-6 text-white shadow-lg border border-slate-600">
           <div className="flex items-center">
-            <div className="p-3 bg-white bg-opacity-20 rounded-lg">
-              <CurrencyDollarIcon className="h-6 w-6 text-white" />
+            <div className="p-3 bg-yellow-400 bg-opacity-20 rounded-lg backdrop-blur-sm">
+              <CurrencyDollarIcon className="h-6 w-6 text-yellow-300" />
             </div>
             <div className="ml-4">
-              <p className="text-white text-opacity-80 text-sm font-medium">Saldo</p>
-              <p className="text-lg md:text-xl lg:text-2xl font-bold text-white">
+              <p className="text-slate-200 text-sm font-medium">Saldo</p>
+              <p className="text-lg md:text-xl lg:text-2xl font-bold text-yellow-300">
                 {isMobile ? formatCurrencyCompact(getBalance()) : formatCurrencyResponsive(getBalance(), false)}
               </p>
             </div>
@@ -351,10 +369,10 @@ const TransactionGroupDetail = () => {
       </div>
 
       {/* Transactions List */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+      <div className="bg-white rounded-xl shadow-xl border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-            <ClockIcon className="w-5 h-5 mr-2 text-slate-800" />
+            <ClockIcon className="w-5 h-5 mr-2 text-slate-600" />
             Daftar Transaksi
           </h3>
         </div>
@@ -370,7 +388,7 @@ const TransactionGroupDetail = () => {
               <div className="mt-6">
                 <button
                   onClick={() => setShowModal(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-800"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
                 >
                   <PlusIcon className="w-4 h-4 mr-2" />
                   Tambah Transaksi
@@ -385,11 +403,11 @@ const TransactionGroupDetail = () => {
                 <div key={transaction.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <div className="p-2 rounded-lg bg-slate-100">
+                      <div className={`p-2 rounded-lg ${transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
                         {transaction.type === 'income' ? (
-                          <ArrowTrendingUpIcon className="h-5 w-5 text-slate-800" />
+                          <ArrowTrendingUpIcon className="h-5 w-5 text-green-600" />
                         ) : (
-                          <ArrowTrendingDownIcon className="h-5 w-5 text-slate-800" />
+                          <ArrowTrendingDownIcon className="h-5 w-5 text-red-600" />
                         )}
                       </div>
                       <div>
@@ -410,7 +428,7 @@ const TransactionGroupDetail = () => {
                     </div>
                     
                     <div className="flex items-center space-x-4">
-                      <p className="text-sm md:text-base lg:text-lg font-semibold text-slate-800">
+                      <p className={`text-sm md:text-base lg:text-lg font-bold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                         {transaction.type === 'income' ? '+' : '-'}{isMobile ? formatCurrencyCompact(safeNumber(transaction.amount)) : formatCurrencyResponsive(transaction.amount, false)}
                       </p>
                       
@@ -418,13 +436,13 @@ const TransactionGroupDetail = () => {
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleEdit(transaction)}
-                            className="p-2 text-gray-400 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-400 hover:text-slate-800 hover:bg-gray-100 rounded-lg transition-colors"
                           >
                             <PencilIcon className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(transaction.id)}
-                            className="p-2 text-gray-400 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-400 hover:text-slate-800 hover:bg-gray-100 rounded-lg transition-colors"
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>
@@ -439,7 +457,7 @@ const TransactionGroupDetail = () => {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-4">
                   <div className="flex items-center text-sm text-gray-700">
                     <span>
                       Menampilkan {startIndex + 1} - {Math.min(endIndex, transactions.length)} dari {transactions.length} transaksi
@@ -451,10 +469,10 @@ const TransactionGroupDetail = () => {
                     <button
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
-                      className={`p-2 rounded-lg transition-colors ${
+                      className={`p-2 rounded-lg transition-all ${
                         currentPage === 1
-                          ? 'text-gray-400 cursor-not-allowed'
-                          : 'text-slate-800 hover:bg-slate-100'
+                          ? 'text-gray-400 cursor-not-allowed opacity-50'
+                          : 'text-slate-600 hover:text-slate-800 hover:bg-gray-100'
                       }`}
                     >
                       <ChevronLeftIcon className="h-5 w-5" />
@@ -468,10 +486,10 @@ const TransactionGroupDetail = () => {
                           <button
                             key={page}
                             onClick={() => goToPage(page)}
-                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
                               currentPage === page
-                                ? 'bg-slate-800 text-white'
-                                : 'text-slate-800 hover:bg-slate-100'
+                                ? 'bg-slate-800 text-white shadow-lg'
+                                : 'text-slate-600 hover:text-slate-800 hover:bg-gray-100'
                             }`}
                           >
                             {page}
@@ -484,10 +502,10 @@ const TransactionGroupDetail = () => {
                     <button
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      className={`p-2 rounded-lg transition-colors ${
+                      className={`p-2 rounded-lg transition-all ${
                         currentPage === totalPages
-                          ? 'text-gray-400 cursor-not-allowed'
-                          : 'text-slate-800 hover:bg-slate-100'
+                          ? 'text-gray-400 cursor-not-allowed opacity-50'
+                          : 'text-slate-600 hover:text-slate-800 hover:bg-gray-100'
                       }`}
                     >
                       <ChevronRightIcon className="h-5 w-5" />
@@ -522,8 +540,19 @@ const TransactionGroupDetail = () => {
             setEditingTransaction(null);
           }}
           groupId={id}
+          groupName={group?.name}
         />
       </SidebarModal>
+
+      {/* Hayabusa User Management Modal */}
+      <HayabusaUserManagement
+        isOpen={showHayabusaManagement}
+        onClose={() => setShowHayabusaManagement(false)}
+        onUserCreated={() => {
+          // Optional: refresh something if needed
+          console.log('Hayabusa user created');
+        }}
+      />
     </div>
   );
 };

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -13,7 +14,21 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  return isAuthenticated ? children : <Navigate to="/" />;
+  if (!isAuthenticated) {
+    return <Navigate to="/" />;
+  }
+
+  // Redirect Hayabusa users to their dashboard if they try to access other routes
+  if (user?.role === 'hayabusa' && !location.pathname.startsWith('/hayabusa')) {
+    return <Navigate to="/hayabusa/dashboard" />;
+  }
+
+  // Prevent non-Hayabusa users from accessing Hayabusa routes
+  if (user?.role !== 'hayabusa' && location.pathname.startsWith('/hayabusa')) {
+    return <Navigate to="/dashboard" />;
+  }
+
+  return children;
 };
 
 export default ProtectedRoute;

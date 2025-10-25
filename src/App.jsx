@@ -10,6 +10,8 @@ import TransactionGroupDetail from './pages/TransactionGroupDetail'
 import Users from './pages/Users'
 import Reports from './pages/Reports'
 import Statistics from './pages/Statistics'
+import HayabusaDashboard from './pages/HayabusaDashboard'
+import HayabusaPaymentForm from './pages/HayabusaPaymentForm'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -18,12 +20,24 @@ function App() {
     <AuthProvider>
       <CacheProvider>
         <Router>
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-gray-50">
           <Routes>
             {/* Login sebagai halaman utama */}
             <Route path="/" element={<Login />} />
             
-            {/* Dashboard dan protected routes */}
+            {/* Hayabusa routes - Standalone without Layout */}
+            <Route path="/hayabusa/dashboard" element={
+              <ProtectedRoute>
+                <HayabusaDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/hayabusa/payments/create" element={
+              <ProtectedRoute>
+                <HayabusaPaymentForm />
+              </ProtectedRoute>
+            } />
+            
+            {/* Dashboard dan protected routes with Layout */}
             <Route element={
               <ProtectedRoute>
                 <Layout />

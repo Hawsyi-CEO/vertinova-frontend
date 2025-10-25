@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   CurrencyDollarIcon,
   CalendarDaysIcon,
@@ -11,6 +11,7 @@ import {
 import TransactionGroupSelect from './TransactionGroupSelect';
 import ValidationError from './ValidationError';
 import { formatCurrencyInput, parseCurrencyInput } from '../utils/currencyFormat';
+import { getHayabusaUsers } from '../services/hayabusaApi';
 
 const ModernTransactionForm = ({ 
   formData, 
@@ -20,8 +21,12 @@ const ModernTransactionForm = ({
   validationErrors, 
   editingTransaction,
   onCancel,
-  groupId // Add groupId prop to identify if we're in a group context
+  groupId, // Add groupId prop to identify if we're in a group context
+  groupName // Add groupName prop to check if it's Simpaskor
 }) => {
+  const [hayabusaUsers, setHayabusaUsers] = useState([]);
+  const [loadingHayabusa, setLoadingHayabusa] = useState(false);
+
   const expenseCategories = [
     'Operasional',
     'Marketing',
@@ -30,8 +35,31 @@ const ModernTransactionForm = ({
     'Konsumsi',
     'Utilitas',
     'Peralatan',
+    'Pembayaran Hayabusa',
     'Lainnya'
   ];
+
+  // Check if current group is Simpaskor
+  const isSimpaskorGroup = groupName?.toLowerCase().includes('simpaskor');
+
+  // Load Hayabusa users when needed
+  useEffect(() => {
+    if (formData.expense_category === 'Pembayaran Hayabusa' && isSimpaskorGroup) {
+      loadHayabusaUsers();
+    }
+  }, [formData.expense_category, isSimpaskorGroup]);
+
+  const loadHayabusaUsers = async () => {
+    try {
+      setLoadingHayabusa(true);
+      const users = await getHayabusaUsers();
+      setHayabusaUsers(users);
+    } catch (error) {
+      console.error('Error loading Hayabusa users:', error);
+    } finally {
+      setLoadingHayabusa(false);
+    }
+  };
 
   // Handle amount input change
   const handleAmountChange = (e) => {
@@ -154,11 +182,50 @@ const ModernTransactionForm = ({
                 className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-slate-800 transition-all duration-200 bg-gray-50 focus:bg-white"
               >
                 <option value="">Pilih kategori...</option>
-                {expenseCategories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
+                {expenseCategories.map(category => {
+                  // Only show "Pembayaran Hayabusa" if in Simpaskor group
+                  if (category === 'Pembayaran Hayabusa' && !isSimpaskorGroup) {
+                    return null;
+                  }
+                  return <option key={category} value={category}>{category}</option>;
+                })}
               </select>
               <ValidationError field="expense_category" errors={validationErrors} />
+            </div>
+          )}
+
+          {/* Pilih Hayabusa (hanya muncul jika kategori = Pembayaran Hayabusa) */}
+          {formData.type === 'expense' && 
+           formData.expense_category === 'Pembayaran Hayabusa' && 
+           isSimpaskorGroup && (
+            <div className="space-y-3">
+              <label className="flex items-center text-sm font-semibold text-gray-700">
+                <UserIcon className="w-5 h-5 mr-2 text-slate-600" />
+                Hayabusa
+              </label>
+              {loadingHayabusa ? (
+                <div className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-500">
+                  Memuat data...
+                </div>
+              ) : (
+                <select
+                  required
+                  value={formData.hayabusa_user_id || ''}
+                  onChange={(e) => setFormData({...formData, hayabusa_user_id: e.target.value})}
+                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-slate-800 transition-all duration-200 bg-gray-50 focus:bg-white"
+                >
+                  <option value="">Pilih Hayabusa...</option>
+                  {hayabusaUsers.map(user => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} ({user.email})
+                    </option>
+                  ))}
+                </select>
+              )}
+              <ValidationError field="hayabusa_user_id" errors={validationErrors} />
+              <p className="text-xs text-gray-500">
+                💡 Transaksi ini akan tercatat sebagai pembayaran honor untuk Hayabusa yang dipilih
+              </p>
             </div>
           )}
 

@@ -229,6 +229,66 @@ const apiService = {
     return response;
   },
 
+  // Hayabusa Payment methods
+  getHayabusaStatistics: async () => {
+    const cacheKey = 'hayabusa_statistics';
+    const cached = getCachedData(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+    
+    const response = await api.get('/hayabusa/statistics');
+    setCachedData(cacheKey, response.data);
+    return response.data;
+  },
+
+  getHayabusaPayments: async (params = {}) => {
+    const cacheKey = `hayabusa_payments_${JSON.stringify(params)}`;
+    const cached = getCachedData(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+    
+    const response = await api.get('/hayabusa/payments', { params });
+    setCachedData(cacheKey, response.data);
+    return response.data;
+  },
+
+  getHayabusaUsers: async () => {
+    const cacheKey = 'hayabusa_users';
+    const cached = getCachedData(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+    
+    const response = await api.get('/hayabusa/users');
+    setCachedData(cacheKey, response.data);
+    return response.data;
+  },
+
+  createHayabusaPayment: async (data) => {
+    // Clear hayabusa cache after create
+    Array.from(apiCache.keys())
+      .filter(key => key.startsWith('hayabusa_'))
+      .forEach(key => apiCache.delete(key));
+    
+    const response = await api.post('/hayabusa/payments', data);
+    return response.data;
+  },
+
+  updateHayabusaPaymentStatus: async (id, status) => {
+    // Clear hayabusa cache after update
+    Array.from(apiCache.keys())
+      .filter(key => key.startsWith('hayabusa_'))
+      .forEach(key => apiCache.delete(key));
+    
+    const response = await api.patch(`/hayabusa/payments/${id}/status`, { status });
+    return response.data;
+  },
+
   // Clear all cache
   clearCache: () => {
     apiCache.clear();
