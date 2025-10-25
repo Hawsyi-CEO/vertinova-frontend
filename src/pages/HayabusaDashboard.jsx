@@ -18,6 +18,7 @@ import {
   ChartBarIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
+  ArrowPathIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
 
@@ -57,6 +58,8 @@ export default function HayabusaDashboard() {
 
   const closeModal = () => {
     setActiveModal(null);
+    // Reload data setelah modal ditutup untuk update data terbaru
+    loadData();
   };
 
   const loadData = async () => {
@@ -150,6 +153,15 @@ export default function HayabusaDashboard() {
 
             {/* Action Buttons - Right side with z-index */}
             <div className="flex items-center space-x-2 relative z-10">
+              <button 
+                onClick={loadData}
+                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-all cursor-pointer"
+                title="Refresh Data"
+                type="button"
+                disabled={loading}
+              >
+                <ArrowPathIcon className={`h-6 w-6 text-white ${loading ? 'animate-spin' : ''}`} />
+              </button>
               <button 
                 onClick={handleProfileClick}
                 className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-all cursor-pointer"
@@ -493,7 +505,11 @@ export default function HayabusaDashboard() {
       {/* Profile Modal */}
       <ProfileModal 
         isOpen={showProfileModal} 
-        onClose={() => setShowProfileModal(false)} 
+        onClose={() => {
+          setShowProfileModal(false);
+          // Reload data setelah profile modal ditutup
+          loadData();
+        }} 
         onToast={(toastData) => {
           console.log('Toast triggered from modal:', toastData);
           setToast(toastData);
