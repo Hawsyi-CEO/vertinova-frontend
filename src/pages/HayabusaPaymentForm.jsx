@@ -131,6 +131,67 @@ export default function HayabusaPaymentForm() {
             {errors.hayabusa_user_id && (
               <p className="mt-1 text-sm text-red-600">{errors.hayabusa_user_id}</p>
             )}
+            
+            {/* Display Bank Account Info if user selected */}
+            {formData.hayabusa_user_id && (() => {
+              const selectedUser = hayabusaUsers.find(u => u.id === parseInt(formData.hayabusa_user_id));
+              if (selectedUser) {
+                // Cek apakah user sudah punya rekening
+                const hasBankAccount = selectedUser.bank_name || selectedUser.account_number || selectedUser.account_holder_name;
+                
+                if (hasBankAccount) {
+                  return (
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <p className="text-sm font-semibold text-blue-900 mb-2">
+                        💳 Informasi Rekening:
+                      </p>
+                      <div className="space-y-1 text-sm">
+                        {selectedUser.bank_name && (
+                          <div className="flex">
+                            <span className="text-blue-700 font-medium w-32">Bank:</span>
+                            <span className="text-blue-900">{selectedUser.bank_name}</span>
+                          </div>
+                        )}
+                        {selectedUser.account_number && (
+                          <div className="flex">
+                            <span className="text-blue-700 font-medium w-32">No. Rekening:</span>
+                            <span className="text-blue-900 font-mono">{selectedUser.account_number}</span>
+                          </div>
+                        )}
+                        {selectedUser.account_holder_name && (
+                          <div className="flex">
+                            <span className="text-blue-700 font-medium w-32">Atas Nama:</span>
+                            <span className="text-blue-900">{selectedUser.account_holder_name}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                } else {
+                  // Jika belum ada rekening, tampilkan peringatan
+                  return (
+                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-yellow-800">
+                            ⚠️ Informasi Rekening Belum Tersedia
+                          </p>
+                          <p className="mt-1 text-sm text-yellow-700">
+                            Karyawan ini belum mengisi informasi rekening bank. Mohon hubungi yang bersangkutan untuk melengkapi data profil mereka.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+              }
+              return null;
+            })()}
           </div>
 
           {/* Transaction Group */}

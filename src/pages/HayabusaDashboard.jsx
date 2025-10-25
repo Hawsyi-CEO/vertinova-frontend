@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { getHayabusaStatistics, getHayabusaPayments } from '../services/hayabusaApi';
 import { formatCurrency } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
+import simpaskorLogo from '../assets/simpaskor-logo.png';
+import ProfileModal from '../components/ProfileModal';
+import Toast from '../components/Toast';
 import { 
   CurrencyDollarIcon, 
   ClockIcon, 
@@ -14,6 +17,7 @@ import {
   CreditCardIcon,
   ChartBarIcon,
   ArrowRightOnRectangleIcon,
+  UserCircleIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
 
@@ -26,6 +30,8 @@ export default function HayabusaDashboard() {
   
   // Modal states
   const [activeModal, setActiveModal] = useState(null); // 'statistik', 'riwayat', 'pembayaran', 'jadwal'
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [toast, setToast] = useState({ message: '', type: '' });
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -38,6 +44,11 @@ export default function HayabusaDashboard() {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleProfileClick = () => {
+    console.log('Profile clicked, opening modal');
+    setShowProfileModal(true);
   };
 
   const openModal = (modalName) => {
@@ -124,25 +135,38 @@ export default function HayabusaDashboard() {
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-b-3xl shadow-xl">
         <div className="px-4 pt-6 pb-20">
           {/* Top Bar */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-slate-800 text-xl font-bold">
-                  {user?.name?.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div>
-                <p className="text-white text-sm opacity-90">Halo,</p>
-                <p className="text-white text-lg font-bold">{user?.name}</p>
-              </div>
+          <div className="flex items-center justify-between mb-6 relative">
+            {/* Logo - Centered */}
+            <div className="absolute left-0 right-0 flex justify-center pointer-events-none">
+              <img 
+                src={simpaskorLogo} 
+                alt="Simpaskor" 
+                className="h-10 w-auto opacity-90"
+              />
             </div>
-            <button 
-              onClick={handleLogout}
-              className="flex items-center space-x-2 px-3 py-2 bg-white/20 rounded-full hover:bg-white/30 transition-all"
-            >
-              <ArrowRightOnRectangleIcon className="h-5 w-5 text-white" />
-              <span className="text-white text-sm font-medium">Logout</span>
-            </button>
+
+            {/* Spacer for left side */}
+            <div className="flex-1"></div>
+
+            {/* Action Buttons - Right side with z-index */}
+            <div className="flex items-center space-x-2 relative z-10">
+              <button 
+                onClick={handleProfileClick}
+                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-all cursor-pointer"
+                title="Profil"
+                type="button"
+              >
+                <UserCircleIcon className="h-6 w-6 text-white" />
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-all cursor-pointer"
+                title="Logout"
+                type="button"
+              >
+                <ArrowRightOnRectangleIcon className="h-6 w-6 text-white" />
+              </button>
+            </div>
           </div>
 
           {/* Saldo Card - Floating */}
@@ -465,6 +489,23 @@ export default function HayabusaDashboard() {
           </div>
         </div>
       )}
+
+      {/* Profile Modal */}
+      <ProfileModal 
+        isOpen={showProfileModal} 
+        onClose={() => setShowProfileModal(false)} 
+        onToast={(toastData) => {
+          console.log('Toast triggered from modal:', toastData);
+          setToast(toastData);
+        }}
+      />
+
+      {/* Toast Notification */}
+      <Toast 
+        message={toast.message} 
+        type={toast.type} 
+        onClose={() => setToast({ message: '', type: '' })} 
+      />
     </div>
   );
 }

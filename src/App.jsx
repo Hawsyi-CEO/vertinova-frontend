@@ -12,6 +12,7 @@ import Reports from './pages/Reports'
 import Statistics from './pages/Statistics'
 import HayabusaDashboard from './pages/HayabusaDashboard'
 import HayabusaPaymentForm from './pages/HayabusaPaymentForm'
+import Profile from './pages/Profile'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -34,6 +35,11 @@ function App() {
             <Route path="/hayabusa/payments/create" element={
               <ProtectedRoute>
                 <HayabusaPaymentForm />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             } />
             

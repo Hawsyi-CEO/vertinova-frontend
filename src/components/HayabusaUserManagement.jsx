@@ -46,7 +46,11 @@ export default function HayabusaUserManagement({ isOpen, onClose, onUserCreated 
       });
 
       // Reset form
-      setFormData({ name: '', email: '', password: 'hayabusa123' });
+      setFormData({ 
+        name: '', 
+        email: '', 
+        password: 'hayabusa123',
+      });
       setShowAddForm(false);
       
       // Reload users
@@ -182,7 +186,11 @@ export default function HayabusaUserManagement({ isOpen, onClose, onUserCreated 
                   type="button"
                   onClick={() => {
                     setShowAddForm(false);
-                    setFormData({ name: '', email: '', password: 'hayabusa123' });
+                    setFormData({ 
+                      name: '', 
+                      email: '', 
+                      password: 'hayabusa123',
+                    });
                     setErrors({});
                   }}
                   className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors"
@@ -212,22 +220,51 @@ export default function HayabusaUserManagement({ isOpen, onClose, onUserCreated 
                 {hayabusaUsers.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-semibold">
-                          {user.name.charAt(0).toUpperCase()}
-                        </span>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                          <span className="text-white font-semibold">
+                            {user.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{user.name}</p>
+                          <p className="text-sm text-gray-500">{user.email}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{user.name}</p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                      </div>
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                        Hayabusa
+                      </span>
                     </div>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                      Hayabusa
-                    </span>
+                    
+                    {/* Bank Account Info */}
+                    {(user.bank_name || user.account_number || user.account_holder_name) && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">Informasi Rekening:</p>
+                        <div className="grid grid-cols-1 gap-1 text-xs">
+                          {user.bank_name && (
+                            <div className="flex">
+                              <span className="text-gray-500 w-24">Bank:</span>
+                              <span className="text-gray-900 font-medium">{user.bank_name}</span>
+                            </div>
+                          )}
+                          {user.account_number && (
+                            <div className="flex">
+                              <span className="text-gray-500 w-24">No. Rekening:</span>
+                              <span className="text-gray-900 font-medium">{user.account_number}</span>
+                            </div>
+                          )}
+                          {user.account_holder_name && (
+                            <div className="flex">
+                              <span className="text-gray-500 w-24">Atas Nama:</span>
+                              <span className="text-gray-900 font-medium">{user.account_holder_name}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
