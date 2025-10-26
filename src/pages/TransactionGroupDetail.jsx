@@ -6,6 +6,7 @@ import api from '../services/api';
 import SidebarModal from '../components/SidebarModal';
 import ModernTransactionForm from '../components/ModernTransactionForm';
 import HayabusaUserManagement from '../components/HayabusaUserManagement';
+import JadwalSimpaskor from '../components/JadwalSimpaskor';
 import { formatCurrencyResponsive, formatCurrencyCompact, safeNumber } from '../utils/currencyFormat';
 import {
   ArrowLeftIcon,
@@ -34,6 +35,7 @@ const TransactionGroupDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showHayabusaManagement, setShowHayabusaManagement] = useState(false);
+  const [showJadwalModal, setShowJadwalModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -47,6 +49,7 @@ const TransactionGroupDetail = () => {
     transaction_group_id: id,
     expense_category: '',
     user_id: '',
+    hayabusa_user_id: '', // Tambahkan field hayabusa_user_id
     notes: ''
   });
 
@@ -129,6 +132,10 @@ const TransactionGroupDetail = () => {
 
   const handleEdit = (transaction) => {
     setEditingTransaction(transaction);
+    
+    // Cek apakah ini transaksi Hayabusa payment
+    const hayabusaUserId = transaction.hayabusa_payment?.hayabusa_user_id;
+    
     setFormData({
       description: transaction.description,
       type: transaction.type,
@@ -138,6 +145,7 @@ const TransactionGroupDetail = () => {
       transaction_group_id: id,
       expense_category: transaction.expense_category || '',
       user_id: transaction.user_id,
+      hayabusa_user_id: hayabusaUserId || '', // Set hayabusa_user_id untuk dropdown
       notes: transaction.notes || ''
     });
     setShowModal(true);
@@ -169,6 +177,7 @@ const TransactionGroupDetail = () => {
       transaction_group_id: id,
       expense_category: '',
       user_id: '',
+      hayabusa_user_id: '', // Reset hayabusa_user_id juga
       notes: ''
     });
   };
@@ -295,6 +304,17 @@ const TransactionGroupDetail = () => {
           </div>
           
           <div className="flex items-center space-x-3">
+            {/* Jadwal Simpaskor button - only for Simpaskor group */}
+            {group?.name?.toLowerCase().includes('simpaskor') && (
+              <button
+                onClick={() => setShowJadwalModal(true)}
+                className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white px-4 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2"
+              >
+                <CalendarIcon className="w-5 h-5" />
+                <span>Jadwal Simpaskor</span>
+              </button>
+            )}
+
             {/* Manage Hayabusa button - only for Simpaskor group */}
             {group?.name?.toLowerCase().includes('simpaskor') && 
              (user?.role === 'admin' || user?.role === 'finance') && (
@@ -420,8 +440,13 @@ const TransactionGroupDetail = () => {
                           {(transaction.category || transaction.expense_category) && (
                             <p className="text-sm text-gray-500">{transaction.expense_category || transaction.category}</p>
                           )}
-                          {transaction.user?.name && (
-                            <p className="text-sm text-gray-500">• {transaction.user.name}</p>
+                          {/* Tampilkan nama Hayabusa jika ada, jika tidak tampilkan user biasa */}
+                          {(transaction.hayabusa_payment?.hayabusa_user?.name || transaction.user?.name) && (
+                            <p className="text-sm text-gray-500">
+                              • {transaction.hayabusa_payment?.hayabusa_user?.name 
+                                  ? `${transaction.hayabusa_payment.hayabusa_user.name} (Hayabusa)` 
+                                  : transaction.user.name}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -552,6 +577,12 @@ const TransactionGroupDetail = () => {
           // Optional: refresh something if needed
           console.log('Hayabusa user created');
         }}
+      />
+
+      {/* Jadwal Simpaskor Modal */}
+      <JadwalSimpaskor 
+        isOpen={showJadwalModal}
+        onClose={() => setShowJadwalModal(false)}
       />
     </div>
   );

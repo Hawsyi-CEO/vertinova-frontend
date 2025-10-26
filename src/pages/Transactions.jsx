@@ -434,7 +434,14 @@ const Transactions = () => {
                       {new Date(transaction.date).toLocaleDateString('id-ID')}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {transaction.description}
+                      <div>
+                        {transaction.description}
+                        {transaction.hayabusa_payment?.hayabusa_user?.name && (
+                          <div className="text-xs text-blue-600 mt-1">
+                            → {transaction.hayabusa_payment.hayabusa_user.name}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {transaction.transaction_group ? (
@@ -465,7 +472,9 @@ const Transactions = () => {
                       {transaction.type === 'income' ? '+' : '-'}{isMobile ? formatCurrencyCompact(safeNumber(Math.abs(transaction.amount))) : formatCurrencyResponsive(Math.abs(transaction.amount), false)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {transaction.user?.name || '-'}
+                      {transaction.hayabusa_payment?.hayabusa_user?.name 
+                        ? `${transaction.hayabusa_payment.hayabusa_user.name} (Hayabusa)` 
+                        : transaction.user?.name || '-'}
                     </td>
                   </tr>
                 ))

@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import simpaskorLogo from '../assets/simpaskor-logo.png';
 import ProfileModal from '../components/ProfileModal';
 import Toast from '../components/Toast';
+import JadwalSimpaskor from '../components/JadwalSimpaskor';
 import { 
   CurrencyDollarIcon, 
   ClockIcon, 
@@ -18,7 +19,6 @@ import {
   ChartBarIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
-  ArrowPathIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
 
@@ -32,6 +32,7 @@ export default function HayabusaDashboard() {
   // Modal states
   const [activeModal, setActiveModal] = useState(null); // 'statistik', 'riwayat', 'pembayaran', 'jadwal'
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showJadwalModal, setShowJadwalModal] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
   
   // Pagination states
@@ -154,15 +155,6 @@ export default function HayabusaDashboard() {
             {/* Action Buttons - Right side with z-index */}
             <div className="flex items-center space-x-2 relative z-10">
               <button 
-                onClick={loadData}
-                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-all cursor-pointer"
-                title="Refresh Data"
-                type="button"
-                disabled={loading}
-              >
-                <ArrowPathIcon className={`h-6 w-6 text-white ${loading ? 'animate-spin' : ''}`} />
-              </button>
-              <button 
                 onClick={handleProfileClick}
                 className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-all cursor-pointer"
                 title="Profil"
@@ -214,10 +206,10 @@ export default function HayabusaDashboard() {
         </div>
       </div>
 
-      {/* Menu Grid - Navy Slate Style */}
+      {/* Menu Grid - Navy Slate Style - 4 tombol sejajar horizontal */}
       <div className="px-4 mt-20 mb-6">
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <button 
               onClick={() => openModal('statistik')}
               className="flex flex-col items-center space-y-2 group"
@@ -246,6 +238,16 @@ export default function HayabusaDashboard() {
                 <CreditCardIcon className="h-6 w-6 text-white" />
               </div>
               <span className="text-xs text-gray-700 font-medium text-center">Pembayaran</span>
+            </button>
+
+            <button 
+              onClick={() => setShowJadwalModal(true)}
+              className="flex flex-col items-center space-y-2 group"
+            >
+              <div className="p-3 bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl group-hover:scale-110 transition-transform shadow-lg">
+                <CalendarIcon className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-xs text-gray-700 font-medium text-center">Jadwal</span>
             </button>
           </div>
         </div>
@@ -514,6 +516,12 @@ export default function HayabusaDashboard() {
           console.log('Toast triggered from modal:', toastData);
           setToast(toastData);
         }}
+      />
+
+      {/* Jadwal Simpaskor Modal */}
+      <JadwalSimpaskor 
+        isOpen={showJadwalModal}
+        onClose={() => setShowJadwalModal(false)}
       />
 
       {/* Toast Notification */}
