@@ -15,6 +15,7 @@ import HayabusaPaymentForm from './pages/HayabusaPaymentForm'
 import Profile from './pages/Profile'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
+import PWAInstallPrompt from './components/PWAInstallPrompt'
 
 function App() {
   return (
@@ -22,6 +23,9 @@ function App() {
       <CacheProvider>
         <Router>
         <div className="min-h-screen bg-gray-50">
+          {/* PWA Install Prompt */}
+          <PWAInstallPrompt />
+          
           <Routes>
             {/* Login sebagai halaman utama */}
             <Route path="/" element={<Login />} />

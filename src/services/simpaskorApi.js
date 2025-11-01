@@ -1,13 +1,16 @@
 import axios from 'axios';
 
-const SIMPASKOR_API_URL = 'https://simpaskor.id/api/landing_page.php';
+// Use our backend proxy instead of calling Simpaskor directly
+// This avoids CORS issues in production
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.vertinova.id';
+const SIMPASKOR_PROXY_URL = `${API_URL}/api/simpaskor/schedule`;
 
 /**
- * Fetch jadwal/events dari Simpaskor API
+ * Fetch jadwal/events dari Simpaskor API melalui backend proxy
  */
 export const getSimpaskorSchedule = async () => {
   try {
-    const response = await axios.get(SIMPASKOR_API_URL);
+    const response = await axios.get(SIMPASKOR_PROXY_URL);
     return response.data;
   } catch (error) {
     console.error('Error fetching Simpaskor schedule:', error);
